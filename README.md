@@ -6,7 +6,7 @@ To use the software, simply open the HTML file in a web browser. The map will lo
 
 The data for this project was compiled from official National Park Service information, elevation data from USGS sources, and personal research about trail difficulties and visitor recommendations. All geographic coordinates were verified using multiple mapping services to ensure accuracy.
 
-[Software Demo Video](http://youtube.link.goes.here)
+[Software Demo Video](https://youtu.be/1Ie422wBlrk)
 
 # Development Environment
 
