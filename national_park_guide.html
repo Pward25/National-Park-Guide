@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yosemite National Park Guide</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.28/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/4.28/"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        #header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #4a7ba7 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 100;
+        }
+        
+        h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        #viewDiv {
+            height: calc(100vh - 85px);
+            width: 100%;
+        }
+        
+        .esri-popup__header-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .location-info {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .location-info strong {
+            color: #1e3a5f;
+        }
+        
+        .info-section {
+            margin: 10px 0;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 22px;
+            }
+            
+            #header {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <h1>🏔️ Yosemite National Park Guide</h1>
+        <p class="subtitle">Explore the iconic landmarks and hidden gems of Yosemite Valley</p>
+    </div>
+    <div id="viewDiv"></div>
+
+    <script>
+        require([
+            "esri/Map",
+            "esri/views/MapView",
+            "esri/Graphic",
+            "esri/layers/GraphicsLayer",
+            "esri/geometry/Point",
+            "esri/symbols/SimpleMarkerSymbol",
+            "esri/symbols/PictureMarkerSymbol",
+            "esri/PopupTemplate"
+        ], function(Map, MapView, Graphic, GraphicsLayer, Point, SimpleMarkerSymbol, PictureMarkerSymbol, PopupTemplate) {
+            
+            const map = new Map({
+                basemap: "satellite"
+            });
+
+            const view = new MapView({
+                container: "viewDiv",
+                map: map,
+                center: [-119.5383, 37.8651],
+                zoom: 11
+            });
+
+            const graphicsLayer = new GraphicsLayer();
+            map.add(graphicsLayer);
+
+            const yosemiteLocations = [
+                {
+                    name: "Half Dome",
+                    coords: [-119.5326, 37.7459],
+                    type: "Iconic Landmark",
+                    description: "Yosemite's most recognizable rock formation",
+                    details: "17-mile round trip hike, cables required for summit. Permits needed.",
+                    elevation: "8,842 feet"
+                },
+                {
+                    name: "El Capitan",
+                    coords: [-119.6372, 37.7341],
+                    type: "Iconic Landmark",
+                    description: "World's largest granite monolith, popular for rock climbing",
+                    details: "3,000-foot vertical rock formation. Watch climbers from the meadow below.",
+                    elevation: "7,569 feet"
+                },
+                {
+                    name: "Yosemite Falls",
+                    coords: [-119.5968, 37.7567],
+                    type: "Waterfall",
+                    description: "Tallest waterfall in North America at 2,425 feet",
+                    details: "Best flow in spring and early summer. Upper and lower falls viewable.",
+                    elevation: "Base at 3,967 feet"
+                },
+                {
+                    name: "Bridalveil Fall",
+                    coords: [-119.6468, 37.7169],
+                    type: "Waterfall",
+                    description: "620-foot waterfall with misty spray",
+                    details: "Short 0.5-mile walk from parking. Often has rainbow in afternoon.",
+                    elevation: "3,000 feet"
+                },
+                {
+                    name: "Vernal Fall",
+                    coords: [-119.5457, 37.7264],
+                    type: "Waterfall",
+                    description: "317-foot waterfall on the Merced River",
+                    details: "Accessible via Mist Trail. Get wet from spray in spring!",
+                    elevation: "5,045 feet"
+                },
+                {
+                    name: "Nevada Fall",
+                    coords: [-119.5338, 37.7313],
+                    type: "Waterfall",
+                    description: "594-foot tall waterfall above Vernal Fall",
+                    details: "Can continue from Vernal Fall for spectacular views.",
+                    elevation: "5,907 feet"
+                },
+                {
+                    name: "Glacier Point",
+                    coords: [-119.5732, 37.7311],
+                    type: "Viewpoint",
+                    description: "Spectacular overlook of Yosemite Valley and Half Dome",
+                    details: "3,214 feet above valley floor. Accessible by car in summer.",
+                    elevation: "7,214 feet"
+                },
+                {
+                    name: "Tunnel View",
+                    coords: [-119.6775, 37.7157],
+                    type: "Viewpoint",
+                    description: "Classic vista of El Capitan, Half Dome, and Bridalveil Fall",
+                    details: "Famous photographic viewpoint. Parking available.",
+                    elevation: "4,000 feet"
+                },
+                {
+                    name: "Mirror Lake",
+                    coords: [-119.5554, 37.7446],
+                    type: "Lake",
+                    description: "Peaceful lake reflecting surrounding cliffs",
+                    details: "2-mile loop trail. Best reflections in spring and early morning.",
+                    elevation: "4,100 feet"
+                },
+                {
+                    name: "Mariposa Grove",
+                    coords: [-119.5997, 37.5049],
+                    type: "Giant Sequoia Grove",
+                    description: "Home to over 500 mature giant sequoias",
+                    details: "Includes the famous Grizzly Giant, 2,700 years old.",
+                    elevation: "5,600 feet"
+                },
+                {
+                    name: "Sentinel Dome",
+                    coords: [-119.5847, 37.7198],
+                    type: "Viewpoint",
+                    description: "360-degree panoramic views of the park",
+                    details: "2.2-mile round trip hike from Glacier Point Road.",
+                    elevation: "8,122 feet"
+                },
+                {
+                    name: "Taft Point",
+                    coords: [-119.6045, 37.7170],
+                    type: "Viewpoint",
+                    description: "Dramatic views and unique rock fissures",
+                    details: "2.2-mile round trip. See sheer 3,000-foot drops.",
+                    elevation: "7,503 feet"
+                },
+                {
+                    name: "Cathedral Beach",
+                    coords: [-119.6058, 37.7289],
+                    type: "Beach/Recreation",
+                    description: "Sandy beach along Merced River",
+                    details: "Popular picnic spot with great views of Cathedral Rocks.",
+                    elevation: "3,950 feet"
+                },
+                {
+                    name: "Swinging Bridge",
+                    coords: [-119.5955, 37.7471],
+                    type: "Recreation",
+                    description: "Pedestrian bridge over Merced River",
+                    details: "Great photo spot and river access point.",
+                    elevation: "3,970 feet"
+                },
+                {
+                    name: "Valley View",
+                    coords: [-119.7185, 37.7205],
+                    type: "Viewpoint",
+                    description: "Western valley entrance viewpoint",
+                    details: "Classic view of El Capitan and Bridalveil Fall together.",
+                    elevation: "3,950 feet"
+                },
+                {
+                    name: "Yosemite Valley Visitor Center",
+                    coords: [-119.5875, 37.7488],
+                    type: "Visitor Services",
+                    description: "Main visitor center and park information",
+                    details: "Museum, bookstore, and ranger programs. Start here!",
+                    elevation: "3,967 feet"
+                },
+                {
+                    name: "Ahwahnee Hotel",
+                    coords: [-119.5757, 37.7465],
+                    type: "Historic Landmark",
+                    description: "Historic luxury hotel built in 1927",
+                    details: "Stunning architecture and dining. Open to public for tours.",
+                    elevation: "4,000 feet"
+                },
+                {
+                    name: "Happy Isles",
+                    coords: [-119.5586, 37.7318],
+                    type: "Trailhead",
+                    description: "Starting point for Mist Trail and John Muir Trail",
+                    details: "Nature center and river access. Very popular starting point.",
+                    elevation: "4,035 feet"
+                },
+                {
+                    name: "Sentinel Beach",
+                    coords: [-119.6193, 37.7304],
+                    type: "Beach/Recreation",
+                    description: "Scenic beach with views of Sentinel Rock",
+                    details: "Swimming, picnicking, and photography opportunities.",
+                    elevation: "3,950 feet"
+                },
+                {
+                    name: "Olmsted Point",
+                    coords: [-119.4907, 37.7899],
+                    type: "Viewpoint",
+                    description: "Unique perspective of Half Dome's back side",
+                    details: "Along Tioga Road. See glacially polished granite.",
+                    elevation: "8,400 feet"
+                },
+                {
+                    name: "Tenaya Lake",
+                    coords: [-119.4541, 37.8297],
+                    type: "Lake",
+                    description: "Beautiful alpine lake along Tioga Road",
+                    details: "Swimming, picnicking, and scenic views. Can be cold!",
+                    elevation: "8,150 feet"
+                },
+                {
+                    name: "Tuolumne Meadows",
+                    coords: [-119.3515, 37.8747],
+                    type: "Meadow/Recreation",
+                    description: "Largest subalpine meadow in the Sierra Nevada",
+                    details: "Wildflowers in summer, camping, hiking trails.",
+                    elevation: "8,600 feet"
+                },
+                {
+                    name: "Lembert Dome",
+                    coords: [-119.3385, 37.8770],
+                    type: "Landmark",
+                    description: "Smooth granite dome in Tuolumne Meadows",
+                    details: "2.8-mile round trip hike to summit for panoramic views.",
+                    elevation: "9,450 feet"
+                },
+                {
+                    name: "Horsetail Fall",
+                    coords: [-119.6304, 37.7301],
+                    type: "Waterfall",
+                    description: "Seasonal waterfall famous for 'firefall' effect",
+                    details: "In late February, sunset creates glowing orange effect.",
+                    elevation: "1,575 feet tall"
+                }
+            ];
+
+            yosemiteLocations.forEach(function(location) {
+                const point = new Point({
+                    longitude: location.coords[0],
+                    latitude: location.coords[1]
+                });
+
+                let markerColor;
+                switch(location.type) {
+                    case "Iconic Landmark":
+                        markerColor = [220, 20, 60];
+                        break;
+                    case "Waterfall":
+                        markerColor = [30, 144, 255];
+                        break;
+                    case "Viewpoint":
+                        markerColor = [255, 165, 0];
+                        break;
+                    case "Lake":
+                        markerColor = [64, 224, 208];
+                        break;
+                    case "Giant Sequoia Grove":
+                        markerColor = [34, 139, 34];
+                        break;
+                    case "Beach/Recreation":
+                        markerColor = [255, 215, 0];
+                        break;
+                    case "Trailhead":
+                        markerColor = [138, 43, 226];
+                        break;
+                    case "Visitor Services":
+                        markerColor = [128, 128, 128];
+                        break;
+                    case "Historic Landmark":
+                        markerColor = [160, 82, 45];
+                        break;
+                    case "Meadow/Recreation":
+                        markerColor = [154, 205, 50];
+                        break;
+                    default:
+                        markerColor = [70, 130, 180];
+                }
+
+                const markerSymbol = new SimpleMarkerSymbol({
+                    color: markerColor,
+                    size: "10px",
+                    outline: {
+                        color: [255, 255, 255],
+                        width: 2
+                    }
+                });
+
+                const popupTemplate = new PopupTemplate({
+                    title: "{name}",
+                    content: `
+                        <div class="location-info">
+                            <div class="info-section">
+                                <strong>📍 Type:</strong> {type}
+                            </div>
+                            <div class="info-section">
+                                <strong>📝 Description:</strong> {description}
+                            </div>
+                            <div class="info-section">
+                                <strong>ℹ️ Details:</strong> {details}
+                            </div>
+                            <div class="info-section">
+                                <strong>⛰️ Elevation:</strong> {elevation}
+                            </div>
+                        </div>
+                    `
+                });
+
+                const pointGraphic = new Graphic({
+                    geometry: point,
+                    symbol: markerSymbol,
+                    attributes: location,
+                    popupTemplate: popupTemplate
+                });
+
+                graphicsLayer.add(pointGraphic);
+            });
+
+            view.popup.dockOptions = {
+                buttonEnabled: false,
+                breakpoint: false
+            };
+        });
+    </script>
+</body>
+</html>
